@@ -6,7 +6,7 @@ tags:
 categories:
     [算法]
 ---
-
+> 相关文章 [LeetCode背包问题](http://imlgw.top/2019/11/29/leetcode-bei-bao-wen-ti/) （对基础的背包问题做了简单的推理）
 ## [423. 采药](https://www.acwing.com/problem/content/425/)
 
 辰辰是个天资聪颖的孩子，他的梦想是成为世界上最伟大的医师。
@@ -206,6 +206,192 @@ public static int[] solveOpt(int N, int M, int K, int[] costN, int[] costM) {
 }
 ```
 
+## [HUD4501.小明系列故事——买年货（HUDOJ）](http://acm.hdu.edu.cn/showproblem.php?pid=4501)
+
+**Problem Description**
+
+春节将至，小明要去超市购置年货，于是小明去了自己经常去的都尚超市。
+
+刚到超市，小明就发现超市门口聚集一堆人。用白云女士的话说就是：“那家伙，那场面，真是人山人海，锣鼓喧天，鞭炮齐呤，红旗招展。那可真是相当的壮观啊！”。好奇的小明走过去，奋力挤过人群，发现超市门口贴了一张通知，内容如下
+
+值此新春佳节来临之际，为了回馈广大顾客的支持和厚爱，特举行春节大酬宾、优惠大放送活动。凡是都尚会员都可用会员积分兑换商品，凡是都尚会员都可**免费拿k件商品**，凡是购物顾客均有好礼相送。满100元送bla bla bla bla，满200元送bla bla bla bla bla...blablabla....
+
+还没看完通知，小明就高兴的要死，因为他就是都尚的会员啊。迫不及待的小明在超市逛了一圈发现超市里有**n件他想要的商品**。小明顺便对这n件商品打了分，表示商品的实际价值。小明发现身上带了**v1的人民币**，会员卡里面有**v2的积分**。他想知道他最多能买多大价值的商品。
+
+由于小明想要的商品实在太多了，他算了半天头都疼了也没算出来，所以请你这位聪明的程序员来帮帮他吧。
+ 
+
+**Input**
+```go
+输入包含多组测试用例。
+每组数据的第一行是四个整数n，v1，v2，k；
+然后是n行，每行三个整数a，b，val，分别表示每个商品的价钱，兑换所需积分，实际价值。
+[Technical Specification]
+1 <= n <= 100
+0 <= v1, v2 <= 100
+0 <= k <= 5
+0 <= a, b, val <= 100
+
+Ps. 只要钱或者积分满足购买一件商品的要求，那么就可以买下这件商品。
+```
+
+**Output**
+```go
+对于每组数据，输出能买的最大价值。
+详细信息见Sample。
+```
+**Sample Input**
+
+```go
+5 1 6 1
+4 3 3
+0 3 2
+2 3 3
+3 3 2
+1 0 2
+4 2 5 0
+0 1 0
+4 4 1
+3 3 4
+3 4 4
+```
+
+**Sample Output**
+
+```go
+12
+4
+```
+Source
+2013腾讯编程马拉松初赛第〇场（3月20日）
+
+### 解法一
+> 很久之前做过的题，拿出来对比下
+
+三维费用的背包，但是和前面的题有点不一样，三个维度的费用是无关的，上面的小精灵，消耗的精灵球和生命值是相关的，所以两个维度的费用需要同时满足才能做合法的计算，而这里并不需要全部满足，而是分别计算
+```java
+import java.util.*;
+import java.io.*;// petr的输入模板
+import java.math.*; // 不是大数题可以不要这个
+
+public class Solve_HDOJ_4501 {
+
+    public static PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out));
+
+    public static void main(String[] args) throws Exception{
+        InputReader in = new InputReader(System.in);
+        //InputReader in = new InputReader(new FileInputStream("./input.txt"));
+        while(!in.EOF()) {
+            int n = in.nextInt();
+            int v1 = in.nextInt();
+            int v2 = in.nextInt();
+            int k = in.nextInt();
+            int[][] cost = new int[n][3];
+            for (int i = 0; i < n; i++) {
+                cost[i][0] = in.nextInt();
+                cost[i][1] = in.nextInt();
+                cost[i][2] = in.nextInt();
+            }
+            solve(n, v1, v2, k, cost);
+        }
+        //别忘了flush
+        out.flush();
+        out.close();
+    }
+
+    //因为数据量不大，就直接Scanner了
+    public static void solve(int n, int v1, int v2, int k, int[][] cost) {
+        int[][][] dp = new int[k+1][v1+1][v2+1];
+        for (int i = 0; i < n; i++) {
+            for (int j = k; j >= 0; j--) {
+                for (int u = v1; u >= 0; u--) {
+                    for (int w = v2; w >= 0; w--) {
+                        //这里不能直接u>=cost[i][0] w >= cost[i][1]，因为积分和钱和免费拿是分开的，没有关联的
+                        //即使我不能免费拿，但是我能用积分拿，即使不能用积分拿，我可以用钱买
+                        //dp[j][u][w] = Math.max(dp[j][u][w], dp[j-1][u-cost[i][0]][w-cost[i][1]] + cost[i][2]);
+                        int ans = 0;
+                        if (j >= 1) { //免费拿
+                            ans = Math.max(ans, dp[j-1][u][w] + cost[i][2]);
+                        }
+                        if (u >= cost[i][0]) { //钱
+                            ans = Math.max(ans, dp[j][u-cost[i][0]][w] + cost[i][2]);
+                        }
+                        if (w >= cost[i][1]) { //积分
+                            ans = Math.max(ans, dp[j][u][w-cost[i][1]] + cost[i][2]);
+                        }
+                        dp[j][u][w] = Math.max(ans, dp[j][u][w]);
+                    }
+                }
+            }
+        }
+        out.println(dp[k][v1][v2]);
+    }
+}
+
+
+class InputReader {
+
+    public BufferedReader reader;
+    
+    public StringTokenizer tokenizer;
+
+    public InputReader(InputStream stream) {
+        //char[32768]
+        reader = new BufferedReader(new InputStreamReader(stream), 32768);
+        tokenizer = null;
+    }
+
+    //默认以" "作为分隔符，读一个
+    public String next() {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            try {
+                tokenizer = new StringTokenizer(reader.readLine());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return tokenizer.nextToken();
+    }
+
+    //有的题目不给有多少组测试用例，只能一直读，读到结尾，需要自己判断结束
+    //该函数也会读取一行，并初始化tokenizer，后序直接nextInt..等就可以读到该行
+    public boolean EOF() {
+        String str = null;
+        try {
+            str = reader.readLine();
+            if (str == null) {
+                return true;
+            }
+            //创建tokenizer
+            tokenizer = new StringTokenizer(str);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
+    }
+
+    int nextInt(){
+        return Integer.parseInt(next());
+    }
+    
+    long nextLong(){
+        return Long.parseLong(next());
+    }
+    
+    double nextDouble(){
+        return Double.parseDouble(next());
+    }
+    
+    BigInteger nextBigInteger(){
+        return new BigInteger(next());
+    }
+
+    BigDecimal nextBigDecimal(){
+        return new BigDecimal(next());
+    }
+}
+```
+
 ## [1023. 买书](https://www.acwing.com/problem/content/1025/)
 
 小明手里有n元钱全部用来买书，书的价格为10元，20元，50元，100元。
@@ -330,4 +516,55 @@ public static int solve(int[] w) {
     return res;
 }
 ```
+看起来很显然的结论的[证明](https://www.cnblogs.com/UntitledCpp/p/14083854.html#day1-t2-%E8%B4%A7%E5%B8%81%E7%B3%BB%E7%BB%9F)
 
+## [1019. 庆功会](https://www.acwing.com/problem/content/description/1021/)
+为了庆贺班级在校运动会上取得全校第一名成绩，班主任决定开一场庆功会，为此拨款购买奖品犒劳运动员。
+
+期望拨款金额能购买最大价值的奖品，可以补充他们的精力和体力。
+
+**输入格式**
+
+第一行二个数n，m，其中n代表希望购买的奖品的种数，m表示拨款金额。
+
+接下来n行，每行3个数，v、w、s，分别表示第I种奖品的价格、价值（价格与价值是不同的概念）和能购买的最大数量（买0件到s件均可）。
+
+**输出格式**
+
+一行：一个数，表示此次购买能获得的最大的价值（注意！不是价格）。
+
+**数据范围** ：n≤500, m≤6000, v≤100, w≤1000, s≤10
+
+**输入样例：**
+```c
+5 1000
+80 20 4
+40 50 9
+30 50 7
+40 30 6
+20 20 1
+```
+**输出样例：**
+```c
+1040
+```
+### 解法一
+
+```java
+//每个物品有k个数量的限制后，问题就变成了01背包
+//dp[i][j] = Max(dp[i-1][j], dp[i-1][j-v[i]]+w[i], dp[i-1][j-2*v[i]]+2*w[i], ... dp[i-1][j-s[i]*v[i]] + s[i]*w[i]) 
+public static int solve (int m, int[] v, int[] w, int[] s) {
+    int n = v.length;
+    int[] dp = new int[m+1];
+    for (int i = 0; i < n; i++) {
+        //逆序避免覆盖
+        for (int j = m; j >= v[i]; j--) {
+            for (int k = s[i]; k >= 0; k--) {
+                if (j-k*v[i] < 0) continue;
+                dp[j] = Math.max(dp[j], dp[j-k*v[i]] + k*w[i]);
+            }
+        }
+    }
+    return dp[m];
+}
+```
