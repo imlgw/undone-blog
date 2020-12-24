@@ -307,3 +307,137 @@ class Main {
     }
 }
 ```
+## [1106. 山峰和山谷](https://www.acwing.com/problem/content/description/1108/)
+
+FGD小朋友特别喜欢爬山，在爬山的时候他就在研究山峰和山谷。
+
+为了能够对旅程有一个安排，他想知道山峰和山谷的数量。
+
+给定一个地图，为FGD想要旅行的区域，地图被分为 n×n 的网格，每个格子 (i,j) 的高度 w(i,j) 是给定的。
+
+若两个格子有公共顶点，那么它们就是相邻的格子，如与 (i,j) 相邻的格子有(i−1,j−1),(i−1,j),(i−1,j+1),(i,j−1),(i,j+1),(i+1,j−1),(i+1,j),(i+1,j+1)。
+
+我们定义一个格子的集合 S 为山峰（山谷）当且仅当：
+
+- S 的所有格子都有相同的高度。
+- S 的所有格子都连通。
+- 对于 s 属于 S，与 s 相邻的 s′ 不属于 S，都有 ws>ws′（山峰），或者 ws<ws′（山谷）。
+- 如果周围不存在相邻区域，则同时将其视为山峰和山谷。
+
+你的任务是，对于给定的地图，求出山峰和山谷的数量，如果所有格子都有相同的高度，那么整个地图即是山峰，又是山谷。
+
+**输入格式**
+
+第一行包含一个正整数 n，表示地图的大小。
+
+接下来一个 n×n 的矩阵，表示地图上每个格子的高度 w。
+
+**输出格式**
+
+共一行，包含两个整数，表示山峰和山谷的数量。
+
+**数据范围** ：1≤n≤1000, 0≤w≤109
+
+**输入样例1：**
+```c
+5
+8 8 8 7 7
+7 7 8 8 7
+7 7 7 7 7
+7 8 8 7 8
+7 8 8 8 8
+```
+**输出样例1：**
+```c
+2 1
+```
+
+**输入样例2：**
+```c
+5
+5 7 8 3 1
+5 5 7 6 6
+6 6 6 2 8
+5 7 2 5 8
+7 1 0 1 7
+```
+
+**输出样例2：**
+```c
+3 3
+```
+
+### 解法一
+
+一开始没看视频，自己写了个DFS，然后死活过不去，卡在了第17/20个case，改了好久也没改好，然后改成BFS一发就过了，BFS连接每个点的连通块，然后判断每个块和四周不联通的块的高度大小，进而判断改连通块是山峰还是山谷
+```java
+class Main {
+
+    static int n;
+    static boolean[][] vis;    
+    static int[][] w;
+    static int[][] dir = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}, {1, -1}, {-1, 1}, {-1, -1}, {1, 1}};
+    static Queue<Pair> queue = new LinkedList<>();
+    static class Pair {
+        int x, y;
+        public Pair (int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+    /*
+     */
+    public static void main(String... args) throws Exception{
+        InputReader in = new InputReader(System.in);
+        // InputReader in = new InputReader(new FileInputStream("./input.txt"));
+        n = in.nextInt();
+        w = new int[n][n];
+        vis = new boolean[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                w[i][j] = in.nextInt();
+            }
+        }
+        int up = 0, down = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (!vis[i][j]) {
+                    int temp = bfs(i, j);
+                    if (temp == 1 || temp == 2) up++;
+                    if (temp == -1 || temp == 2) down++;
+                }
+            }
+        }
+        System.out.println(up + " " + down);
+    }
+
+    public static int bfs(int x, int y) {
+        queue.clear(); 
+        queue.add(new Pair(x, y));
+        vis[x][y] = true;
+        boolean up = false, down = false;
+        while (!queue.isEmpty()){
+            Pair p = queue.poll();
+            for (int i = 0; i < dir.length; i++) {
+                int nx = p.x + dir[i][0];
+                int ny = p.y + dir[i][1];
+                if (nx < 0 || ny < 0 || nx >= n || ny >= n) {
+                    continue;
+                }
+                if (w[p.x][p.y] < w[nx][ny]) {
+                    down = true;
+                } else if (w[p.x][p.y] > w[nx][ny]) {
+                    up = true;
+                } else if (!vis[nx][ny]) {
+                    vis[nx][ny] = true;
+                    queue.add(new Pair(nx, ny));
+                }
+            }
+        }
+        if (up && down) return 0;
+        if (up) return 1;
+        if (down) return -1;
+        return 2;
+    }
+}
+```
