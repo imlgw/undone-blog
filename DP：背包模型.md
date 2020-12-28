@@ -518,6 +518,146 @@ public static int solve(int[] w) {
 ```
 看起来很显然的结论的[证明](https://www.cnblogs.com/UntitledCpp/p/14083854.html#day1-t2-%E8%B4%A7%E5%B8%81%E7%B3%BB%E7%BB%9F)
 
+## [6. 多重背包问题 III](https://www.acwing.com/problem/content/6/)
+有 N 种物品和一个容量是 V 的背包。
+
+第 i 种物品最多有 si 件，每件体积是 vi，价值是 wi。
+
+求解将哪些物品装入背包，可使物品体积总和不超过背包容量，且价值总和最大。
+输出最大价值。
+
+**输入格式**
+
+第一行两个整数，N，V (0<N≤1000, 0<V≤20000) ，用空格隔开，分别表示物品种数和背包容积。
+
+接下来有 N 行，每行三个整数 vi,wi,si，用空格隔开，分别表示第 i 种物品的体积、价值和数量。
+
+**输出格式**
+
+输出一个整数，表示最大价值。
+
+**数据范围** : 0<N≤1000, 0<V≤20000, 0<vi,wi,si≤20000
+
+**输入样例**
+```c
+4 5
+1 2 3
+2 4 1
+3 4 3
+4 5 2
+```
+
+**输出样例：**
+```c
+10
+```
+### 解法一
+暴力的做法，时间复杂度`O(NVS)`，4e11了，所以必然是过不了OJ的
+```java
+import java.util.*;
+import java.io.*;
+class Main {
+
+    //dp[i][j]=Max(dp[i-1][j], dp[i-1][j-v]+w, dp[i-1][j-2*v]+2*w,... dp[i-1][j-s*v]+s*w)
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int[] in = read(br);
+        int N = in[0];
+        int M = in[1];
+        int[][] dp = new int[N+1][M+1];
+        LinkedList<Integer> queue = new LinkedList<>();
+        for (int i = 1; i <= N; i++) {
+            int[] temp = read(br);
+            int v = temp[0], w = temp[1], s = temp[2];
+            for (int j = 0; j <= M; j++) {
+                for (int k = 0; k <= s && k*v <= j; k++) {
+                    dp[i][j] = Math.max(dp[i][j], dp[i-1][j-k*v]+k*w);
+                }
+            }
+        }
+        System.out.println(dp[N][M]);
+    }
+
+    private static int[] read(BufferedReader br) throws IOException {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
+### 解法二
+
+单调队列优化DP，有点难度，看题解都看了好久才理解。。。
+
+首先我们很容易得到整体的递推公式: `dp[i][j]`代表前i个物品，背包体积为j时，能装的最大价值
+
+`dp[i][j]=Max(dp[i−1][j], dp[i−1][j−v]+w, dp[i−1][j−2∗v]+2∗w,… dp[i−1][j−s∗v]+s∗w)`
+
+其实和前面完全背包差不多，只是多了一个物品数量s的限制。我们可以发现`dp[i][j]`只和j-v, j-2v, j-3v这些状态有关，而这些状态除以v都是同余的，所以我们可以将这些状态按余数划分为不同的组，余数`r`的范围是`[0, v)`
+
+转移方程变为
+```java
+// 0 <= r < v
+dp[i][r]    =     dp[i-1][r]
+dp[i][r+v]  = max(dp[i-1][r] +  w,  dp[i-1][r+v])
+dp[i][r+2v] = max(dp[i-1][r] + 2w,  dp[i-1][r+v] +  w, dp[i-1][r+2v])
+dp[i][r+3v] = max(dp[i-1][r] + 3w,  dp[i-1][r+v] + 2w, dp[i-1][r+2v] + w, dp[i-1][r+3v])
+```
+这个时候其实我们已经可以发现一些端倪了，后一项都是前一项加上一个值再加上一些偏移量再取Max的值，我们再将其变形一下
+```java
+// 0 <= r < v
+dp[i][r]    =     dp[i-1][r]
+dp[i][r+v]  = max(dp[i-1][r],  dp[i-1][r+v] - w) + w
+dp[i][r+2v] = max(dp[i-1][r],  dp[i-1][r+v] - w, dp[i-1][r+2v] - 2w) + 2w
+dp[i][r+3v] = max(dp[i-1][r],  dp[i-1][r+v] - w, dp[i-1][r+2v] - 2w, dp[i-1][r+3v] - 3w) + 3w
+```
+现在其实就很明显了，max内就是一个简单的滑窗，我们可以用单调队列去维护滑窗的最大值（[模板](http://imlgw.top/2019/07/20/leetcode-hua-dong-chuang-kou/#239-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%9C%80%E5%A4%A7%E5%80%BC)）
+
+具体代码如下，时间复杂度`O(NM)`
+```java
+import java.util.*;
+import java.io.*;
+class Main {
+
+    //dp[i][j]   = Max(dp[i-1][j], dp[i-1][j-v]+w, dp[i-1][j-2*v]+2*w,... dp[i-1][j-s*v]+s*w)
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int[] in = read(br);
+        int N = in[0];
+        int M = in[1];
+        int[][] dp = new int[N+1][M+1];
+        //单调队列求最大值
+        LinkedList<int[]> queue = new LinkedList<>();
+        for (int i = 1; i <= N; i++) {
+            int[] temp = read(br);
+            int v = temp[0], w = temp[1], s = temp[2];
+            //枚举余数[0, v)
+            for (int r = 0; r < v; r++) {
+                queue.clear();
+                //枚举同余所有状态dp[j] dp[j+v] dp[j+2v]....
+                for (int k = 0; r+k*v <= M; k++) {
+                    int val = dp[i-1][r+k*v] - k*w;
+                    while (!queue.isEmpty() && queue.getLast()[0] < val) {
+                        queue.removeLast();
+                    }
+                    //同余的数组元素数量可能超过同一物品的使用次数s
+                    //区间内使用次数: ((r+k*v)-(r+q.first()[1]*v)) / v = k-q.first()[1]
+                    if (!queue.isEmpty() && k - queue.getFirst()[1] > s) {
+                        queue.removeFirst();
+                    }
+                    queue.addLast(new int[]{val, k});
+                    dp[i][r+k*v] = queue.getFirst()[0] + k*w;
+                }
+            }
+        }
+        System.out.println(dp[N][M]);
+    }
+
+    private static int[] read(BufferedReader br) throws IOException {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+还是有点难度喔，这题虽然搞懂了，但是下次遇到类似的题还是不一定会😂
 ## [1019. 庆功会](https://www.acwing.com/problem/content/description/1021/)
 为了庆贺班级在校运动会上取得全校第一名成绩，班主任决定开一场庆功会，为此拨款购买奖品犒劳运动员。
 
