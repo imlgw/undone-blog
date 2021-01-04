@@ -78,6 +78,175 @@ public static int solveOpt(int T, int M, int[] v, int[] cost) {
 ```
 [1024. 装箱问题](https://www.acwing.com/problem/content/1026/)和[278. 数字组合](https://www.acwing.com/problem/content/280/)和这个差不多，不多写了
 
+
+## [8. 二维费用的背包问题](https://www.acwing.com/problem/content/8/)
+有 N 件物品和一个容量是 V 的背包，背包能承受的最大重量是 M。
+
+每件物品只能用一次。体积是 vi，重量是 mi，价值是 wi。
+
+求解将哪些物品装入背包，可使物品总体积不超过背包容量，总重量不超过背包可承受的最大重量，且价值总和最大。
+输出最大价值。
+
+**输入格式**
+
+第一行两个整数，N，V,M，用空格隔开，分别表示物品件数、背包容积和背包可承受的最大重量。
+
+接下来有 N 行，每行三个整数 vi,mi,wi，用空格隔开，分别表示第 i 件物品的体积、重量和价值。
+
+**输出格式**
+
+输出一个整数，表示最大价值。
+
+**数据范围**：0<N≤1000，0<V,M≤100，0<vi,mi≤100，0<wi≤1000
+
+**输入样例**
+```c
+4 5 6
+1 2 3
+2 4 4
+3 4 5
+4 5 6
+```
+**输出样例：**
+```c
+8
+```
+
+### 解法一
+多维费用背包模板题
+```java
+import java.io.*;
+import java.util.*;
+
+class Main {
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int[] in = read(br);
+        int N = in[0], V = in[1], M = in[2];
+        int[][] dp = new int[V+1][M+1];
+        for (int i = 1; i <= N; i++) {
+            int[] vmw = read(br);
+            int vi = vmw[0], mi = vmw[1], wi = vmw[2];
+            for (int j = V; j >= vi; j--) {
+                for (int k = M; k >= mi; k--) {
+                    dp[j][k] = Math.max(dp[j][k], dp[j-vi][k-mi]+wi);
+                }
+            }
+        }
+        System.out.println(dp[V][M]);
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+## [1020. 潜水员](https://www.acwing.com/problem/content/1022/)
+潜水员为了潜水要使用特殊的装备。
+
+他有一个带2种气体的气缸：一个为氧气，一个为氮气。
+
+让潜水员下潜的深度需要各种数量的氧和氮。
+
+潜水员有一定数量的气缸。
+
+每个气缸都有重量和气体容量。
+
+潜水员为了完成他的工作需要特定数量的氧和氮。
+
+他完成工作所需气缸的总重的最低限度的是多少？
+
+
+**输入格式**
+
+第一行有2个整数 m，n。它们表示氧，氮各自需要的量。
+
+第二行为整数 k 表示气缸的个数。
+
+此后的 k 行，每行包括ai，bi，ci，3个整数。这些各自是：第 i 个气缸里的氧和氮的容量及气缸重量。
+
+**输出格式**
+
+仅一行包含一个整数，为潜水员完成工作所需的气缸的重量总和的最低值。
+
+**数据范围**：1≤m≤21, 1≤n≤79, 1≤k≤1000, 1≤ai≤21, 1≤bi≤79, 1≤ci≤800
+
+**输入样例：**
+```c
+5 60
+5
+3 36 120
+10 25 129
+5 50 250
+1 45 130
+4 20 119
+```
+**输出样例：**
+```c
+249
+```
+
+### 解法一
+>一开始写了个记忆化递归，负数状态不保存，结果T了。
+
+这题也是二维费用的背包问题，但是这里是求能覆盖费用的最小重量，求的是**至少**，上面的求的是 **最多**，方程其实很相似，但是细节还是不一样，首先初始状态不一样，这里求最小值，所以初始状态应该都赋值成+∞，`dp[i][j][k]`代表前i个氧气罐，氧气至少为j，氮气至少为k的时候，气缸最小的重量
+
+核心的递推方程仍然是这个，但是状态的含义变了
+```java
+//省略一维，y,d,w代表氧气，氮气，质量
+dp[j][k] = Math.min(dp[j][k], dp[j-y][k-d]+w);
+```
+这里二个维度的状态说的都是**至少**，那么意味着`j-y < 0` 或者 `k-d < 0` 也是合法的，而负数状态和`0状态(至少是0)`是等价的，所以我们可以从`0状态`合法的转移过来，使得状态计算完整不遗漏。一开始自己思考的时候想到了这种情况，但是考虑的不够完全
+
+```java
+import java.util.*;
+import java.io.*;
+
+public class AcWing1020_潜水员 {
+    public static void main(String[] args) throws Exception {
+        new Main().main();
+    }
+}
+
+class Main {
+    
+    //dp[i][j] = Math.min(dp[i][j], dp[i-y][j-d]+w);
+    public static void main(String... args) throws Exception {
+        // BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int INF = 0x3f3f3f3f;
+        int[] in = read(br);
+        int Y = in[0], D = in[1], N = Integer.parseInt(br.readLine());
+        //dp[i][j]: 氧气至少i，氮气至少j，需要的最小重量
+        int[][] dp = new int[Y+1][D+1];
+        for (int i = 0; i <= Y; i++) {
+            Arrays.fill(dp[i], INF);
+        }
+        dp[0][0] = 0;
+        for (int i = 0; i < N; i++) {
+            int[] ydw = read(br);
+            int yi = ydw[0], di = ydw[1], wi = ydw[2];
+            for (int j = Y; j >= 0; j--) {
+                for (int k = D; k >= 0; k--) {
+                    // if (j < yi || k < di) {
+                    //     dp[j][k] = Math.min(dp[j][k], wi);
+                    // } else {
+                    //     dp[j][k] = Math.min(dp[j][k], dp[j-yi][k-di] + wi);
+                    // }
+                    // 上面的递推缺乏考虑，如果氧气和氮气只有一种超出了范围，另一维的状态不应该跟着按照0算
+                    dp[j][k] = Math.min(dp[j][k], dp[Math.max(j-yi, 0)][Math.max(k-di, 0)] + wi);
+                }
+            }
+        }
+        System.out.println(dp[Y][D]);
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
 ## [1022. 宠物小精灵之收服](https://www.acwing.com/problem/content/1024/)
 
 宠物小精灵是一部讲述小智和他的搭档皮卡丘一起冒险的故事。
@@ -794,4 +963,3 @@ class Main {
 }
 ```
 多重背包的情况暂时还没有做优化，等后面看了二进制优化的方法窄来补一发，单调队列优化的不太想写
-
