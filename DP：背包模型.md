@@ -1063,3 +1063,54 @@ public class AcWing1013_机器分配 {
     }
 }
 ```
+其实也可以不用back数组，事后我看yxc的做法就是直接根据dp值枚举每个厂分配的个数，倒推看前面是从哪个转移过来的，这样复杂度会高一点点，而且不能做降维操作，其实都一样，核心就是从后往前倒推状态转移的方向
+
+## [426. 开心的金明](https://www.acwing.com/problem/content/428/)
+
+金明今天很开心，家里购置的新房就要领钥匙了，新房里有一间他自己专用的很宽敞的房间。
+
+更让他高兴的是，妈妈昨天对他说：“你的房间需要购买哪些物品，怎么布置，你说了算，只要不超过N元钱就行”。
+
+今天一早金明就开始做预算，但是他想买的东西太多了，肯定会超过妈妈限定的N元。
+
+于是，他把每件物品规定了一个重要度，分为5等：用整数1~5表示，第5等最重要。
+
+他还从因特网上查到了每件物品的价格（都是整数元）。
+
+他希望在不超过N元（可以等于N元）的前提下，使每件物品的价格与重要度的乘积的总和最大。 
+
+设第j件物品的价格为v[j]，重要度为w[j]，共选中了k件物品，编号依次为j1，j2，…，jk，则所求的总和为： 
+
+v[j1]∗w[j1]+v[j2]∗w[j2]+…+v[jk]∗w[jk]
+请你帮助金明设计一个满足要求的购物单。
+
+### 解法一
+
+01背包
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    public static void main(String... args) throws Exception {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        int M = in[0], N = in[1];
+        int[] dp = new int[M+1];
+        for (int i = 1; i <= N; i++) {
+            int[] vp = read(br);
+            int v = vp[0], p = vp[1];
+            for (int j = M; j >= v; j--) {
+                dp[j] = Math.max(dp[j], dp[j-v]+v*p);
+            }
+        }
+        System.out.println(dp[M]);
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
