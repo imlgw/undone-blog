@@ -1114,3 +1114,151 @@ class Main {
     }
 }
 ```
+
+## [11. 背包问题求方案数](https://www.acwing.com/problem/content/11/)
+
+有 $N$ 件物品和一个容量是 $V$ 的背包。每件物品只能使用一次。
+
+第 $i$ 件物品的体积是 $v_i$，价值是 $w_i$。
+
+求解将哪些物品装入背包，可使这些物品的总体积不超过背包容量，且总价值最大。
+
+输出 最优选法的方案数。注意答案可能很大，请输出答案模 $10^9+7$ 的结果。
+
+**输入格式**
+
+第一行两个整数，$N$，$V$，用空格隔开，分别表示物品数量和背包容积。
+
+接下来有 $N$ 行，每行两个整数 $v_i$, $w_i$，用空格隔开，分别表示第 $i$ 件物品的体积和价值。
+
+**输出格式**
+
+输出一个整数，表示 方案数 模 $10^9+7$ 的结果。
+
+**数据范围**
+
+- $0<N,V≤1000$
+- $0<v_i,w_i≤1000$
+
+**输入样例**
+```c
+4 5
+1 2
+2 4
+3 4
+4 6
+```
+
+**输出样例：**
+```c
+2
+```
+
+### 解法一
+背包问题搞起来还是有点麻烦喔，递推方程都是众所周知的，但是递推的细节有点不好想。
+
+下面的解法是设置的状态是: $dp[i][j]$，考虑前$i$个物品体积 **恰好** 是$j$的时候最大价值，同时还需要一个$cnt[i][j]$，考虑前$i$个物品体积恰好是$j$的时候最大价值的方案数量，$cnt$根据$dp$的值进行转移
+1. 当$dp[i-1][j-v_i]+w_i > dp[i-1][j]$的时候，说明$cnt[i][j]$当前的价值不是最大的，所以会被$cnt[i-1][j-v_i]$替代
+2. 当$dp[i-1][j-v_i]+w_i = dp[i-1][j]$的时候，说明$cnt[i][j]$和$cnt[i-1][j-v_i]$的最大价值相同，可以累加起来
+
+初始状态：$cnt[i][0] = 1$，$dp[i][0] = 0\  other\ \inf$（体积恰好为0只有一种方案，什么都不装）
+
+最后我们需要求出最大的价值`maxV`，注意这里最大价值不一定是$dp[N][V]$，因为我们这里求的是体积 **恰好** $j$的最大价值。然后再根据最大价值的$dp[i][j]$状态求对应$cnt[i][j]$的方案数之和就行了
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        int N = in[0], V = in[1];
+        int INF = 0x3f3f3f3f;
+        int MOD = (int)1e9+7;
+        // dp[j]: 体积刚好为j时，最大的价值
+        int[] dp = new int[V+1];
+        // cnt[j]: 体积刚好为j时，最大价值方案数
+        int[] cnt = new int[V+1];
+        Arrays.fill(dp, -INF);
+        dp[0] = 0; cnt[0] = 1;
+        for (int i = 1; i <= N; i++) {
+            int[] t = read(br);
+            int vi = t[0], wi = t[1];
+            for (int j = V; j >= vi; j--) {
+                int val = dp[j-vi] + wi;
+                if (val > dp[j]) { // 从dp[i-1][j-vi]推过来，val比当前的大，所以cnt[j]被取代
+                    cnt[j] = cnt[j-vi];
+                    dp[j] = val;
+                } else if (val == dp[j]) { // 从dp[i-1][j-vi]推过来，val和当前相同，叠加起来
+                    cnt[j] = (cnt[j] + cnt[j-vi]) % MOD;
+                }
+            }
+        }
+        int maxW = 0;
+        for (int i = 0; i <= V; i++) maxW = Math.max(maxW, dp[i]);
+        long res = 0;
+        for (int i = 0; i <= V; i++) {
+            if (dp[i] == maxW) {
+                res = (res + cnt[i]) % MOD;
+            }
+        }
+        out.println(res);
+        out.flush();
+        out.close();
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
+### 解法二
+
+其实和上面的解法大同小异，但是状态的定义不一样，初始值不一样，但是转移方程是一样的，这里状态定义为：$dp[i][j]$，考虑前$i$个物品体积 **最多** 是$j$的时候最大价值，$cnt[i][j]$同理
+
+初始状态：$cnt[0][j] = 1$，注意和上面的区别，这里实际上没有物品可以装，所以最大价值就是0，那么对于任意体积$j$，我们只能选择不装，方案数量为1
+```java
+class Main {
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        int N = in[0], V = in[1];
+        int MOD = (int)1e9+7;
+        //dp[j]: 体积小于等于j时，最大的价值
+        int[] dp = new int[V+1];
+        //cnt[j]: 体积小于等于j时，最大价值方案数
+        int[] cnt = new int[V+1];
+        //这里其实初始化的是dp[0][i]=1，此时最大价值就是0，什么都不装
+        Arrays.fill(cnt, 1);
+        for (int i = 0; i < N; i++) {
+            int[] t = read(br);
+            int vi = t[0], wi = t[1];
+            for (int j = V; j >= vi; j--) {
+                int val = dp[j-vi] + wi;
+                if (val > dp[j]) {
+                    dp[j] = val;
+                    cnt[j] = cnt[j-vi];
+                } else if (val == dp[j]) {
+                    cnt[j] = (cnt[j] + cnt[j-vi]) % MOD;
+                }
+            }
+        }
+        out.println(cnt[V]);
+        out.flush();
+        out.close();
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
+> 初始状态的定义初始化还是要好好琢磨下
