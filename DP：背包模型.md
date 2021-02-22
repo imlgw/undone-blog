@@ -1262,3 +1262,194 @@ class Main {
 ```
 
 > 初始状态的定义初始化还是要好好琢磨下
+
+## [10. 有依赖的背包问题](https://www.acwing.com/problem/content/description/10/)
+有 N 个物品和一个容量是 V 的背包。
+
+物品之间具有依赖关系，且依赖关系组成一棵树的形状。如果选择一个物品，则必须选择它的父节点。
+
+如下图所示：
+
+![](https://i.loli.net/2021/02/22/aEhD4KInUcObAMk.png)
+
+如果选择物品5，则必须选择物品1和2。这是因为2是5的父节点，1是2的父节点。
+
+每件物品的编号是 i，体积是 vi，价值是 wi，依赖的父节点编号是 pi。物品的下标范围是 1…N。
+
+求解将哪些物品装入背包，可使物品总体积不超过背包容量，且总价值最大。
+
+输出最大价值。
+
+**输入格式**
+
+第一行有两个整数 N，V，用空格隔开，分别表示物品个数和背包容量。
+
+接下来有 N 行数据，每行数据表示一个物品。
+第 i 行有三个整数 vi,wi,pi，用空格隔开，分别表示物品的体积、价值和依赖的物品编号。
+如果 pi=−1，表示根节点。 数据保证所有物品构成一棵树。
+
+**输出格式**
+
+输出一个整数，表示最大价值。
+
+**数据范围**：1≤N,V≤100，1≤vi,wi≤100
+
+**父节点编号范围：**
+- 内部结点：1≤pi≤N;
+- 根节点 pi=−1;
+
+**输入样例**
+```c
+5 7
+2 3 -1
+2 2 1
+3 5 1
+4 7 2
+3 6 2
+```
+**输出样例**
+```c
+11
+```
+### 解法一
+参考大佬的[解法](https://www.acwing.com/solution/content/5780/)，多叉树转二叉树 + 记忆化递归的做法，感觉相比yxc的分组背包更好理解，也是能想到的范围。除此之外大佬还写了一种dfs序的方法，但是dfs序我还不太了解，先埋个坑，等以后遇到再来填一下
+```java
+import java.util.*;
+import java.io.*;
+
+/*
+多叉树的存储（左孩子，右兄弟）+ 记忆化递归
+ */
+class Main {
+
+    static int N, M;
+    static int[][] dp;
+    //二叉树节点
+    static int[] left, right;
+    static int[] son;
+    static int[] v, w;
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        N = in[0]; M = in[1];
+        left = new int[N+1]; right = new int[N+1];
+        v = new int[N+1]; w = new int[N+1];
+        son = new int[N+1];
+        dp = new int[N+1][M+1];
+        for (int i = 0; i <= N; i++) {
+            Arrays.fill(dp[i], -1);
+        }
+        int root = 0;
+        for (int i = 1; i <= N; i++) {
+            int[] t = read(br);
+            v[i] = t[0]; w[i] = t[1];
+            if (t[2] == -1) {
+                root = i;
+            } else {
+                if (son[t[2]] == 0) {
+                    left[t[2]] = i;
+                } else {
+                    right[son[t[2]]] = i;
+                }
+                son[t[2]] = i;
+            }
+        }
+        out.println(dfs(root, M));
+        out.flush();
+    }
+
+    //在i子树下，体积不超过j的情况下，能得到的最大收益
+    //子树的选取不是孤立的，是可以一起选的，所以应该按照体积分配划分子树
+    public static int dfs(int i, int j) {
+        // i=0子树不存在
+        if (i==0 || j < 0) return 0;
+        if (dp[i][j] != -1) {
+            return dp[i][j];
+        }
+        //不选当前节点，体积j全部分配给兄弟节点
+        dp[i][j] = dfs(right[i], j);
+        //当前节点必选，分给子节点k，兄弟节点j-v[i]-k
+        for (int k = 0; k <= j-v[i]; k++) {
+            dp[i][j] = Math.max(dp[i][j], dfs(left[i], k) + dfs(right[i], j-v[i]-k) + w[i]);
+        }
+        return dp[i][j];
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+### 解法二
+这个是ycx讲的方法，分组背包的解法，我反正是理解不能...但是这里确实AC了...不是我等凡人能想到的做法
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    static int N, V;
+    static int[] vs;
+    static int[] ws;
+    static int idx;
+    static int[] h, ne, e;
+    static int[][] dp;
+    //添加边a->b
+    public static void add(int a, int b) {
+        e[idx] = b; ne[idx] = h[a]; h[a] = idx++;
+    }
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        N = in[0]; V = in[1];
+        vs = new int[N+1]; ws = new int[N+1];
+        h = new int[N+1]; ne = new int[N+1]; e = new int[N+1];
+        Arrays.fill(h, -1);
+        dp = new int[N+1][V+1];
+        int root = 0;
+        for (int i = 1; i <= N; i++) {
+            int[] t = read(br);
+            vs[i] = t[0]; ws[i] = t[1];
+            if (t[2] == -1) {
+                root = i;
+            } else {
+                add(t[2], i);
+            }
+        }
+        dfs(root);
+        out.println(dp[root][V]);
+        out.flush();
+    }
+
+    //dp[i][j]: 在i子树下，体积不操作j的时候最大的价值
+    public static void dfs(int u) {
+        for (int i = h[u]; i != -1; i = ne[i]) {
+            dfs(e[i]);
+            //先将根节点的体积空出来，根节点是必选的
+            for (int j = V-vs[u]; j >= 0; j--) {
+                for (int k = 0; k <= j; k++) {
+                    //这里为什么可以直接用根节点+子节点？难道不会重复吗？
+                    dp[u][j] = Math.max(dp[u][j], dp[u][j-k]+dp[e[i]][k]);
+                }
+            }
+        }
+        for (int j = V; j >= 0; j--) {
+            if (j < vs[u]) {
+                dp[u][j] = 0;
+            } else {
+                dp[u][j] = dp[u][j-vs[u]] + ws[u];
+            }
+        }
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
