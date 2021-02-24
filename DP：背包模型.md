@@ -1453,3 +1453,90 @@ class Main {
     }
 }
 ```
+
+## [12. 背包问题求具体方案](https://www.acwing.com/problem/content/12/)
+
+有$N$件物品和一个容量是$V$的背包。每件物品只能使用一次。
+
+第 $i$ 件物品的体积是 $v_i$，价值是 $w_i$。
+
+求解将哪些物品装入背包，可使这些物品的总体积不超过背包容量，且总价值最大。
+
+输出 字典序最小的方案。这里的字典序是指：所选物品的编号所构成的序列。物品的编号范围是 $1…N$。
+
+输入格式
+第一行两个整数，$N$，$V$，用空格隔开，分别表示物品数量和背包容积。
+
+接下来有 $N$ 行，每行两个整数 $v_i$, $w_i$，用空格隔开，分别表示第 $i$ 件物品的体积和价值。
+
+**输出格式**
+
+输出一行，包含若干个用空格隔开的整数，表示最优解中所选物品的编号序列，且该编号序列的字典序最小。
+
+物品编号范围是 1…N。
+
+**数据范围**： $0<N,V≤1000$，$0<v_i,w_i≤1000$
+
+**输入样例**
+```c
+4 5
+1 2
+2 4
+3 4
+4 6
+```
+**输出样例：**
+```c
+1 4
+```
+### 解法一
+一开始写了使用back数组的方案，但是发现并不好求字典序最小的，back数组是通过**倒推**推出来的，所以得到的一定不是字典序最小的。所以这里我们需要正向的推，改变状态方程定义，设置递推状态为：$dp[i][j]$，从第$i$个物品到最后一个物品（$i$从0开始，包括$i$），体积不超过$j$的最大收益
+- 入口：$dp[N][0 \backsim M] = 0$，不选取任何物品
+- 转移：$dp[i][j] = \min(dp[i+1][j], dp[i+1][j-v_i]+w_i)$
+- 出口：$dp[0][M]$就是最大收益
+
+在状态填充完毕后，我们就可以正向的推出一个字典序最小的方案：顺序遍历物品编号，当$dp[i][M] = dp[i+1][M-v_i] + w_i$，说明选取该物品可以获得最大收益，我们要求的是字典序最小的，所以我们应该**优先选取**靠前的物品，而我们是正向遍历的，所以直接选取该物品输出，然后减去对应的体积，继续循环该过程，最终结果就一定是字典序最小的方案
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int[] in = read(br);
+        int N = in[0], M = in[1];
+        int[] v = new int[N];
+        int[] w = new int[N];
+        for (int i = 0; i < N; i++) {
+            int[] t = read(br);
+            v[i] = t[0]; w[i] = t[1];
+        }
+        //第i个物品到最后（包括i），体积不超过j的情况下最大收益（状态不同于之前的状态）
+        //dp[i][j] = min(dp[i+1][j], dp[i+1][j-v]+w)
+        int[][] dp = new int[N+1][M+1];
+        for (int i = N-1; i >= 0; i--) {
+            for (int j = M; j >= 0; j--) {
+                dp[i][j] = dp[i+1][j];
+                if (j >= v[i]) {
+                    dp[i][j] = Math.max(dp[i+1][j-v[i]] + w[i], dp[i+1][j]);;
+                }
+            }
+        }
+        for (int i = 0; i <= N-1; i++) {
+            if (M-v[i] < 0) continue;
+            if (dp[i][M] == dp[i+1][M-v[i]] + w[i]) {
+                out.print((i+1)+" ");
+                M -= v[i];
+            }
+        }
+        out.flush();
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
