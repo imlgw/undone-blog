@@ -1540,3 +1540,163 @@ class Main {
     }
 }
 ```
+
+## [734. 能量石](https://www.acwing.com/problem/content/736/)
+岩石怪物杜达生活在魔法森林中，他在午餐时收集了N块能量石准备开吃。
+
+由于他的嘴很小，所以一次只能吃一块能量石。
+
+能量石很硬，吃完需要花不少时间。
+
+吃完第 $i$ 块能量石需要花费的时间为$S_i$秒。
+
+杜达靠吃能量石来获取能量。 
+
+不同的能量石包含的能量可能不同。
+
+此外，能量石会随着时间流逝逐渐失去能量。
+
+第 $i$ 块能量石最初包含$E_i$单位的能量，并且每秒将失去$L_i$单位的能量。
+
+当杜达开始吃一块能量石时，他就会立即获得该能量石所含的全部能量（无论实际吃完该石头需要多少时间）。
+
+能量石中包含的能量最多降低至0。
+
+请问杜达通过吃能量石可以获得的最大能量是多少？
+
+**输入格式**
+
+第一行包含整数T，表示共有T组测试数据。
+
+每组数据第一行包含整数N，表示能量石的数量。
+
+接下来$N$行，每行包含三个整数$S_i,E_i,L_i$。
+
+**输出格式**
+
+每组数据输出一个结果，每个结果占一行。
+
+结果表示为“Case #x: y”，其中x是组别编号（从1开始），y是可以获得的最大能量值。
+
+**数据范围**
+- $1≤T≤10$
+- $1≤N≤100$
+- $1≤Si≤100$
+- $1≤Ei≤105$
+- $0≤Li≤105$
+  
+**输入样例：**
+```c
+3
+4
+20 10 1
+5 30 5
+100 30 1
+5 80 60
+3
+10 4 1000
+10 3 1000
+10 8 1000
+2
+12 300 50
+5 200 0
+```
+**输出样例：**
+```c
+Case #1: 105
+Case #2: 8
+Case #3: 500
+```
+**样例解释**
+
+在样例＃1中，有N = 4个宝石。杜达可以选择的一个吃石头顺序是：
+
+吃第四块石头。这需要5秒，并给他80单位的能量。
+吃第二块石头。这需要5秒，并给他5单位的能量（第二块石头开始时具有30单位能量，5秒后失去了25单位的能量）。
+吃第三块石头。这需要100秒，并给他20单位的能量（第三块石头开始时具有30单位能量，10秒后失去了10单位的能量）。
+吃第一块石头。这需要20秒，并给他0单位的能量（第一块石头以10单位能量开始，110秒后已经失去了所有的能量）。
+他一共获得了105单位的能量，这是能获得的最大值，所以答案是105。
+
+在样本案例＃2中，有N = 3个宝石。
+
+无论杜达选择吃哪块石头，剩下的两个石头的能量都会耗光。
+
+所以他应该吃第三块石头，给他提供8单位的能量。
+
+在样本案例＃3中，有N = 2个宝石。杜达可以：
+
+吃第一块石头。这需要12秒，并给他300单位的能量。
+吃第二块石头。这需要5秒，并给他200单位的能量（第二块石头随着时间的推移不会失去任何能量！）。
+所以答案是500。
+
+### 解法一
+贪心+背包的解法。
+
+传统的01背包，我们一般都是直接遍历给定的原始物品顺序，然后进行递推，这里实际上就包含了拿取的顺序，物品靠前的会被优先拿取，只不过传统01背包拿取顺序对结果没有影响，所以直接顺序递推没有问题。
+
+而这题中吃石头的顺序会对结果产生影响，所以需要保证通过我们设定的排列顺序进行拿取最终一定能拿到最优解。
+
+假设最优的吃石头的顺序是$a_0, a_1, a_2,...,a_i,a_j,...,a_k$。$a_i$代表石头在原始序列中的位置，$k$为最终吃的石头个数。那么我们交换任意的**相邻**两个石头$a_i$和$a_j$对其他的石头是没有任何影响的，并且这种交换最终获得的能量一定是**小于等于**当前的最优解获得的能量的，即（$t$为之前消耗的时间）
+$$
+E_i-(t*l_i)+E_j-(t+S_i)*l_j \geq E_j-(t*l_j)+E_i-(t+S_j)*l_i
+$$
+化简后为：$S_i*l_j \leq S_j*l_i$，所以我们只要按照这一条件排列石头，然后进行递推就能保证获得最大收益
+
+排列好之后我们以时间$S$作为背包的体积
+- 状态：$dp[i][j]$为前$i$个石头，消耗时间**刚好**为$j$时最大的收益
+- 转移方程：$dp[i][j] = \max(dp[i-1][j], dp[i-1][j-s_i]+\max(0, E_i-(j-s_i)*l_i))$
+- 出口：$\max(dp[i][j])$
+  
+注意这里必须要设置为时间**恰好为**$j$的最大收益，如果设置成**不超过**，这里$E_i-(j-s_i)*l_i$的计算就有问题，$j-s_i$就不是准确的消耗时间，导致最终结果不对
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int T = read(br)[0];
+        int idx = 0;
+        while (T-- > 0) {
+            idx++;
+            int N = read(br)[0];
+            int[] s = new int[N], e = new int[N], l = new int[N];
+            for (int i = 0; i < N; i++) {
+                int[] t = read(br);
+                s[i] = t[0]; e[i] = t[1]; l[i] = t[2];
+            }
+            out.printf("Case #%d: %d\n", idx, solve(N, s, e, l));
+        }
+        out.flush();
+    }
+
+    //按照Si/Li排序
+    public static int solve(int N, int[] s, int[] e, int[] lo) {
+        int MAX = 10005;
+        Integer[] id = new Integer[N];
+        for (int i = 0; i < N; i++) id[i]=i;
+        Arrays.sort(id, (i1, i2)->s[i1]*lo[i2]-s[i2]*lo[i1]);
+        int[] dp = new int[MAX];
+        int res = 0;
+        for (int k = 0; k < N; k++) {
+            int i = id[k];
+            for (int j = MAX-1; j >= s[i]; j--) {
+                dp[j] = Math.max(dp[j], dp[j-s[i]] + Math.max(0, e[i]-(j-s[i])*lo[i]));
+                res = Math.max(res, dp[j]);
+            }
+        }
+        return res;
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
+
+
+
