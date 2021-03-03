@@ -252,7 +252,7 @@ class Main {
 ```
 ### 解法二
 
-优雅的位运算，东南西北对应的墙1，2，4，8就是2<sup>0</sup>，2<sup>1</sup>，2<sup>2</sup>，2<sup>3</sup>，所以我们可以根据二进制的对应位的0，1状态判断该方向有没有墙
+优雅的位运算，东南西北对应的墙1，2，4，8就是$2^0，2^1，2^2，2^3$，所以我们可以根据二进制的对应位的0，1状态判断该方向有没有墙
 
 ```java
 class Main {
@@ -369,7 +369,7 @@ FGD小朋友特别喜欢爬山，在爬山的时候他就在研究山峰和山�
 
 ### 解法一
 
-一开始没看视频，自己写了个DFS，然后死活过不去，卡在了第17/20个case，改了好久也没改好，然后改成BFS一发就过了，BFS连接每个点的连通块，然后判断每个块和四周不联通的块的高度大小，进而判断改连通块是山峰还是山谷
+一开始没看视频，自己写了个DFS，然后死活过不去，卡在了第17/20个case，改了好久也没改好，然后改成BFS一发就过了，BFS连接每个点的连通块，然后比较每个块和四周不联通的块的高度大小，进而判断该连通块是山峰还是山谷
 ```java
 class Main {
 
@@ -411,8 +411,10 @@ class Main {
         System.out.println(up + " " + down);
     }
 
+    //对这个点进行广搜，并且进行标记
+    //返回值: -1山谷, 0啥也不是, 1山峰, 2既是山峰也是山谷
     public static int bfs(int x, int y) {
-        queue.clear(); 
+        queue.clear();
         queue.add(new Pair(x, y));
         vis[x][y] = true;
         boolean up = false, down = false;
@@ -434,9 +436,11 @@ class Main {
                 }
             }
         }
+        //up和down同时满足，说明周围既有比当前大的，也有比当前小的
         if (up && down) return 0;
         if (up) return 1;
         if (down) return -1;
+        //up和down都不满足，所有元素一样，既是山峰也是山谷
         return 2;
     }
 }
