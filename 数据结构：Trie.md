@@ -164,3 +164,93 @@ class Main {
     }
 }
 ```
+## [143. 最大异或对](https://www.acwing.com/problem/content/description/145/)
+
+在给定的$N$个整数$A_1，A_2…A_N$中选出两个进行$xor$（异或）运算，得到的结果最大是多少？
+
+**输入格式**
+
+第一行输入一个整数$N$。
+
+第二行输入$N$个整数$A_1～A_N$。
+
+**输出格式**
+
+输出一个整数表示答案。
+
+**数据范围**
+- $1≤N≤10^5$
+- $0≤A_i<2^31$
+
+**输入样例：**
+```c
+3
+1 2 3
+```
+**输出样例：**
+```c
+3
+```
+
+### 解法一
+一直在想怎么通过Trie直接把最大异或和求出来，其实没必要，枚举所有的数字，然后去Trie中找每一位相异的就行了，注意存数字的时候补齐前面的0，时间复杂度$O(Nlog31)$
+```java
+import java.util.*;
+import java.io.*;
+
+class Main {
+
+    static int N;
+    static int[][] son;
+    static int idx;
+
+    public static void insert(int a) {
+        int cur = 0;
+        for (int i = 31; i >= 0; i--) {
+            int c = (a>>>i)&1;
+            if (son[cur][c]==0) {
+                son[cur][c] = ++idx;
+            }
+            cur = son[cur][c];
+        }
+    }
+
+    public static int query(int a) {
+        int cur = 0, tar = 0;
+        for (int i = 31; i >= 0; i--) {
+            int c = (a>>>i)&1;
+            // 与c相异的存在
+            if (son[cur][c^1] != 0) {
+                tar = tar*2 + c^1;
+                cur = son[cur][c^1];
+            } else {
+                tar = tar*2 + c;
+                cur = son[cur][c];
+            }
+        }
+        return a^tar;
+    }
+
+    public static void main(String... args) throws Exception {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(System.out));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        // BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("./input.txt")));
+        int N = read(br)[0];
+        // 最多31N个二进制位
+        son = new int[31*N][2];
+        int[] A = read(br);
+        for (int i = 0; i < N; i++) insert(A[i]);
+        int res = 0;
+        for (int i = 0; i < N; i++) {
+            res = Math.max(res, query(A[i]));
+        }
+        out.println(res);
+        out.flush();
+    }
+
+    public static int[] read(BufferedReader br) throws Exception {
+        return Arrays.stream(br.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+}
+```
+
