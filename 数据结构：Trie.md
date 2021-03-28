@@ -180,7 +180,7 @@ class Main {
 
 **数据范围**
 - $1≤N≤10^5$
-- $0≤A_i<2^31$
+- $0≤A_i<2^{31}$
 
 **输入样例：**
 ```c
@@ -254,3 +254,103 @@ class Main {
 }
 ```
 
+## [1803. 统计异或值在范围内的数对有多少](https://leetcode-cn.com/problems/count-pairs-with-xor-in-a-range/)
+
+Difficulty: **困难**
+
+
+给你一个整数数组 `nums` （下标 **从 0开始** 计数）以及两个整数：`low` 和 `high` ，请返回 **漂亮数对** 的数目。
+
+**漂亮数对** 是一个形如 `(i, j)` 的数对，其中 `0 <= i < j < nums.length` 且 `low <= (nums[i] XOR nums[j]) <= high` 。
+
+**示例 1：**
+
+```c
+输入：nums = [1,4,2,7], low = 2, high = 6
+输出：6
+解释：所有漂亮数对 (i, j) 列出如下：
+    - (0, 1): nums[0] XOR nums[1] = 5 
+    - (0, 2): nums[0] XOR nums[2] = 3
+    - (0, 3): nums[0] XOR nums[3] = 6
+    - (1, 2): nums[1] XOR nums[2] = 6
+    - (1, 3): nums[1] XOR nums[3] = 3
+    - (2, 3): nums[2] XOR nums[3] = 5
+```
+
+**示例 2：**
+
+```c
+输入：nums = [9,8,4,2,1], low = 5, high = 14
+输出：8
+解释：所有漂亮数对 (i, j) 列出如下：
+​​​​​    - (0, 2): nums[0] XOR nums[2] = 13
+    - (0, 3): nums[0] XOR nums[3] = 11
+    - (0, 4): nums[0] XOR nums[4] = 8
+    - (1, 2): nums[1] XOR nums[2] = 12
+    - (1, 3): nums[1] XOR nums[3] = 10
+    - (1, 4): nums[1] XOR nums[4] = 9
+    - (2, 3): nums[2] XOR nums[3] = 6
+    - (2, 4): nums[2] XOR nums[4] = 5
+```
+
+**提示：**
+
+- $1 <= nums.length <= 2 \ast 10^4$
+- $1 <= nums[i] <= 2 \ast 10^4$
+- $1 <= low <= high <= 2 \ast 10^4$
+
+### 解法一
+233th周赛t4，首先能想到用字典树，然后求$[low, high]$实际上就是求$[0,high+1)-[0,low)$，需要对字典树进行修改，具体见注释
+```java
+class Solution {
+    
+    int idx;
+    int[][] son;
+    int[] cnt;
+    public void insert(int a) {
+        int cur = 0;
+        for (int i = 15; i >= 0; i--) {
+            int c = (a>>>i)&1;
+            if (son[cur][c] == 0) {
+                son[cur][c] = ++idx;
+            }
+            cur = son[cur][c];
+            // 当前节点下面有多少个数字
+            cnt[cur]++;
+        }
+    }
+
+    //查询和a异或后小于limit的数量
+    public int query(int a, int limit) {
+        int cur = 0, res = 0;
+        for (int i = 15; i >= 0; i--) {
+            int c = (a>>>i)&1, h = (limit>>>i)&1;
+            if (c == 0 && h == 0) { //cur只能向0走，否则就超过limit了
+                cur = son[cur][0];
+            } else if (c == 0 && h == 1) { //cur向0走的都是小于limit的，统计下，然后向1走
+                res += cnt[son[cur][0]];
+                cur = son[cur][1];
+            } else if (c == 1 && h == 0) { //cur只能向1走
+                cur = son[cur][1];
+            } else if (c == 1 && h == 1) { //同上
+                res += cnt[son[cur][1]];
+                cur = son[cur][0];
+            }
+            if (cur == 0) return res;
+        }
+        return res;
+    }
+
+    public int countPairs(int[] nums, int low, int high) {
+        int N = nums.length;
+        son = new int[17*N][2];
+        cnt = new int[17*N];
+        int res = 0;
+        for (int i = 0; i < N; i++) {
+            res += (query(nums[i], high+1)-query(nums[i], low));
+            insert(nums[i]);
+        }
+        return res;
+    }
+}
+```
