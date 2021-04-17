@@ -295,12 +295,12 @@ Difficulty: **困难**
 
 **提示：**
 
-- $1 <= nums.length <= 2 \ast 10^4$
-- $1 <= nums[i] <= 2 \ast 10^4$
-- $1 <= low <= high <= 2 \ast 10^4$
+- $1 \leq \text{nums.length} \leq 2 \ast 10^4$
+- $1 \leq \text{nums[i]} \leq 2 \ast 10^4$
+- $1 \leq \text{low} \leq \text{high} \leq 2 \ast 10^4$
 
 ### 解法一
-233th周赛t4，首先能想到用字典树，然后求$[low, high]$实际上就是求$[0,high+1)-[0,low)$，需要对字典树进行修改，具体见注释
+233th周赛t4，首先能想到要用字典树，然后求$[low, high]$实际上就是求$[0,high+1)-[0,low)$，需要对字典树进行修改，具体见注释
 ```java
 class Solution {
     
