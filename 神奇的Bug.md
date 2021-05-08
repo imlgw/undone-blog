@@ -73,3 +73,4 @@ private native void writeBytes(byte b[], int off, int len, boolean append)
 这个时候所有的输出都无法显示再console上，但是正在输出的线程也也并不会`BLOCK`，状态仍然是`RUNNABLE`，也就是上面所描述的情况，当你这个时候在CMD状态下按一下回车或者其他的键释放console，![mark](http://static.imlgw.top/blog/20191208/4RXkNizHfNsP.png?imageslim)
 
 这个线程又会继续往下执行，至此问题就基本解决了（其实都不算问题），没想到还会被cmd给坑一把，不过增长了一点排查问题的能力也还是不错的😁
+测试更
